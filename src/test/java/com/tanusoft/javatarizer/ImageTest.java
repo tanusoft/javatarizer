@@ -23,30 +23,61 @@
 
 package com.tanusoft.javatarizer;
 
+import static org.junit.Assert.assertEquals;
+
+import java.awt.image.BufferedImage;
+
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Unit-test class for {@link JavatarizerCLI}.
+ * Unit-test class for {@link Image}.
  * 
- * @author cfra
+ * @author Christophe Franco
+ * 
  */
-public class JavatarizerCLITest {
+public class ImageTest {
 
-	private JavatarizerCLI javatatizerCLI;
+	private final int imageType = BufferedImage.TYPE_3BYTE_BGR;
+	private int height;
+	private int width;
+	private Image image;
+	private Image squareImage;
 
 	@Before
 	public void prepare() {
-		this.javatatizerCLI = new JavatarizerCLI();
+		this.width = 200;
+		this.height = 100;
+
+		final BufferedImage bufferedImage = new BufferedImage(this.width,
+				this.height, this.imageType);
+
+		this.image = new Image(bufferedImage);
+
+		this.squareImage = this.image.extractSquareImage();
 	}
 
-	@Test(expected = NullPointerException.class)
-	public void nullNameTest() {
-		this.javatatizerCLI.readImage(null);
+	@Test
+	public void widthTest() {
+		assertEquals("width", this.width, this.image.getWidth());
 	}
 
-	@Test(expected = RuntimeException.class)
-	public void invalidNameTest() {
-		this.javatatizerCLI.readImage("foo");
+	@Test
+	public void heightTest() {
+		assertEquals("height", this.height, this.image.getHeight());
 	}
+
+	@Test
+	public void squareImageWidthTest() {
+		assertEquals("width", Math.min(this.width, this.height),
+				this.squareImage.getWidth());
+	}
+
+	@Test
+	public void squareImageHeightTest() {
+		assertEquals("height", Math.min(this.width, this.height),
+				this.squareImage.getHeight());
+	}
+
+	// TODO : square image from square image
 }

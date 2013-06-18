@@ -23,26 +23,42 @@
 
 package com.tanusoft.javatarizer;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
 public class JavatarizerCLI {
 
-	public void readImage(final String imagePath) {
+	public Image readImage(final String imagePath) {
+		final File imageFile = new File(imagePath);
 		try {
-			// the line that reads the image file
-			final BufferedImage image = ImageIO.read(new File(imagePath));
-
-			System.out.println("Successfully opened image file " + imagePath
-					+ " (" + image.getWidth() + "x" + image.getHeight() + ")");
-
+			return new Image(imageFile);
 		} catch (final IOException e) {
-			throw new RuntimeException("Unable to read image file " + imagePath);
+			// getCanonicalPath() unusable here: it may throw an IOException
+			final String absolutePath = imageFile.getAbsolutePath();
+			throw new RuntimeException("Unable to read image file "
+					+ absolutePath);
+		}
+	}
+
+	/**
+	 * @param image
+	 * @param path
+	 * @throws IOException
+	 */
+	private void writeImage(final Image image, final String path)
+			throws IOException {
+		final String[] pathFragments = path.split("\\.");
+		if (pathFragments.length != 2) {
+			throw new IllegalStateException(Arrays.toString(pathFragments));
 		}
 
+		final String savePath = pathFragments[0] + "_square.gif";
+
+		final File f = new File(savePath);
+		ImageIO.write(image.getImage(), "GIF", f);
 	}
 
 	/**
@@ -54,7 +70,15 @@ public class JavatarizerCLI {
 		final JavatarizerCLI javatarizerCLI = new JavatarizerCLI();
 
 		try {
-			javatarizerCLI.readImage(args[0]);
+			final String imagePath = args[0];
+			final Image sourceImage = javatarizerCLI.readImage(imagePath);
+			final Image squareImage = sourceImage.extractSquareImage();
+
+			System.out.println("Extracted square image "
+					+ squareImage.toString());
+
+			javatarizerCLI.writeImage(squareImage, imagePath);
+
 		} catch (final Exception e) {
 			System.out.println(e.getLocalizedMessage());
 		}
