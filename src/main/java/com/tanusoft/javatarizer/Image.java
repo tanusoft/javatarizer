@@ -73,10 +73,16 @@ public class Image {
 		return this.image.getWidth();
 	}
 
+	public Image extractSquareImage() {
+		return this.extractSquareImage(0.5);
+	}
+
 	/**
+	 * @param position
+	 *            from 0 to 1
 	 * @return
 	 */
-	public Image extractSquareImage() {
+	public Image extractSquareImage(final double position) {
 		final int height = this.getHeight();
 		final int width = this.getWidth();
 
@@ -84,11 +90,11 @@ public class Image {
 
 		final int x, y;
 		if (height < width) {
-			x = (width - height) / 2;
+			x = (int) Math.ceil((width - height) * position);
 			y = 0;
 		} else {
 			x = 0;
-			y = (height - width) / 2;
+			y = (int) Math.ceil((height - width) * position);
 		}
 
 		final BufferedImage squareImage = this.image.getSubimage(x, y,

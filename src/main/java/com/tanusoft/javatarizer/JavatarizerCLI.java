@@ -23,9 +23,17 @@
 
 package com.tanusoft.javatarizer;
 
+import gifutil.GifFrame;
+import gifutil.GifUtil;
+
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -46,16 +54,18 @@ public class JavatarizerCLI {
 	/**
 	 * @param image
 	 * @param path
+	 * @param frameId
 	 * @throws IOException
 	 */
-	private void writeImage(final Image image, final String path)
-			throws IOException {
+	private void writeImage(final Image image, final String path,
+			final int frameId) throws IOException {
 		final String[] pathFragments = path.split("\\.");
 		if (pathFragments.length != 2) {
 			throw new IllegalStateException(Arrays.toString(pathFragments));
 		}
 
-		final String savePath = pathFragments[0] + "_square.gif";
+		final String savePath = pathFragments[0] + "_" + frameId
+				+ "_square.gif";
 
 		final File f = new File(savePath);
 		ImageIO.write(image.getImage(), "GIF", f);
@@ -72,16 +82,50 @@ public class JavatarizerCLI {
 		try {
 			final String imagePath = args[0];
 			final Image sourceImage = javatarizerCLI.readImage(imagePath);
-			final Image squareImage = sourceImage.extractSquareImage();
 
-			System.out.println("Extracted square image "
-					+ squareImage.toString());
+			final String[] pathFragments = imagePath.split("\\.");
+			if (pathFragments.length != 2) {
+				throw new IllegalStateException(Arrays.toString(pathFragments));
+			}
 
-			javatarizerCLI.writeImage(squareImage, imagePath);
+			final String savePath = pathFragments[0] + "_square.gif";
+
+			final List<GifFrame> gifFrames = new ArrayList<GifFrame>();
+
+			final int nbFrames = 31;
+			for (int i = 0; i < nbFrames; i++) {
+				final double position = 1. - i / (nbFrames + 1.);
+				final Image squareImage = sourceImage
+						.extractSquareImage(position);
+
+				final int transparantColor = 0xFFFFFF; // white
+				final BufferedImage gif = GifUtil.convertRGBAToGIF(
+						squareImage.getImage(), transparantColor);
+
+				// every frame takes ... ms
+				final long delay = 2000 / nbFrames;
+
+				// make transparent pixels not 'shine through'
+				final String disposal = GifFrame.RESTORE_TO_BGCOLOR;
+
+				// add frame to sequence, twice
+				final GifFrame frame = new GifFrame(gif, delay, disposal);
+				gifFrames.add(frame);
+				gifFrames.add(0, frame);
+
+				System.out.println("Extracted square image " + i + " "
+						+ squareImage.toString());
+
+				// javatarizerCLI.writeImage(squareFrame, imagePath, i);
+			}
+
+			final OutputStream gifOS = new FileOutputStream(savePath);
+
+			final int loopCount = 0; // loop indefinitely
+			GifUtil.saveAnimatedGIF(gifOS, gifFrames, loopCount);
 
 		} catch (final Exception e) {
 			System.out.println(e.getLocalizedMessage());
 		}
 	}
-
 }
